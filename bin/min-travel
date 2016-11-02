@@ -1,0 +1,8 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my $steps_per_mm = 314.961;
+my $min_travel = 1 / $steps_per_mm;
+print sprintf( '%0.4f', $min_travel ) . "\n";

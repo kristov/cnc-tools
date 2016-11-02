@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCGenerator::SliceView;
+
+my $file = $ARGV[0];
+my $z = $ARGV[1];
+my $i = CNCGenerator::SliceView->new( { file => $file, z => $z } );
+$i->run;

@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCGenerator;
+
+#my $file = '/home/ceade/Documents/cube_10x10.stl';
+#my $file = '/home/ceade/Documents/Projects/jet-engine/turbine.stl';
+my $file = $ARGV[0];
+
+my $ci = CNCGenerator->new( { file => $file } );
+$ci->run;

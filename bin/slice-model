@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCTool::Options;
+use CNCTool::Project;
+
+my $op = CNCTool::Options->new(
+    {
+        name    => 'project',
+        type    => 'string',
+        req     => 1,
+        desc    => 'Project name',
+    },
+    {
+        name    => 'stl',
+        type    => 'file',
+        req     => 1,
+        desc    => 'STL file to slice',
+    },
+    {
+        name    => 'steps-per-mm',
+        type    => 'decimal',
+        req     => 0,
+        desc    => 'Number of steps on motor for 1mm of travel in the Z axis',
+    },
+    {
+        name    => 'min-travel',
+        type    => 'decimal',
+        req     => 0,
+        desc    => 'The minimal amount of travel in the Z axis in mm',
+    },
+);
+my $opts = $op->get_options;
+
+my $proj = CNCTool::Project->new( { project => $opts->{project}, stl => $opts->{stl} } );
+$proj->slice_model;
+
