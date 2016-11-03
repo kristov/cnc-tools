@@ -75,34 +75,33 @@ sub layer_renderers {
             $cr->save;
 
             my $layer = $self->layer;
-            my $path = $layer->[0];
-use Data::Dumper;
-print Dumper( $path );
+            for my $path ( @{ $layer } ) {
 
-            $cr->set_line_width( 1 );
-            $cr->set_source_rgb( 0, 1, 0 );
+                $cr->set_line_width( 2 );
+                $cr->set_source_rgb( 0, 1, 0 );
 
-            my $scale = 40;
-            my $offset = 20;
+                my $scale = 40;
+                my $offset = 20;
 
-            for my $line ( @{ $path } ) {
-                my $xs = ( $line->start->X * $scale ) + $offset;
-                my $ys = ( $line->start->Y * $scale ) + $offset;
-                my $xe = ( $line->end->X * $scale ) + $offset;
-                my $ye = ( $line->end->Y * $scale ) + $offset;
-                $cr->move_to( $xs, $ys );
-                $cr->line_to( $xe, $ye );
+                for my $line ( @{ $path } ) {
+                    my $xs = ( $line->start->X * $scale ) + $offset;
+                    my $ys = ( $line->start->Y * $scale ) + $offset;
+                    my $xe = ( $line->end->X * $scale ) + $offset;
+                    my $ye = ( $line->end->Y * $scale ) + $offset;
+                    $cr->move_to( $xs, $ys );
+                    $cr->line_to( $xe, $ye );
+                }
+                $cr->stroke();
+
+                $cr->set_source_rgb( 1, 0, 0 );
+
+                for my $line ( @{ $path } ) {
+                    my $xs = ( $line->start->X * $scale ) + $offset;
+                    my $ys = ( $line->start->Y * $scale ) + $offset;
+                    $cr->rectangle( $xs - 5, $ys - 5, 10, 10 );
+                }
+                $cr->stroke();
             }
-            $cr->stroke();
-
-            $cr->set_source_rgb( 1, 0, 0 );
-
-            for my $line ( @{ $path } ) {
-                my $xs = ( $line->start->X * $scale ) + $offset;
-                my $ys = ( $line->start->Y * $scale ) + $offset;
-                $cr->rectangle( $xs - 5, $ys - 5, 10, 10 );
-            }
-            $cr->stroke();
 
             $cr->restore;
         },
