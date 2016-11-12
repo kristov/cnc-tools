@@ -1,0 +1,51 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCTool::Options;
+use CNCTool::Util;
+
+my $options = CNCTool::Options->new(
+    {
+        name    => 'file',
+        type    => 'file',
+        req     => 1,
+        desc    => 'Layer file',
+    },
+);
+my $opts = $options->get_options;
+
+my $util = CNCTool::Util->new;
+my $layer = $util->load_layer_file( { file => $opts->{file} } );
+
+my $nr_paths = scalar( @{ $layer } );
+my $bbox = $layer->bounding_box;
+
+pl( '' );
+pl( 'layer info:' );
+pl( 'number paths: %s', $nr_paths );
+pl( 'size: [ %0.2f, %0.2f ]', $bbox->width, $bbox->height );
+pl( 'min: [ %0.2f, %0.2f ], max: [ %0.2f, %0.2f ]', $bbox->minx, $bbox->miny, $bbox->maxx, $bbox->maxy );
+pl( '' );
+pl( 'path info:' );
+pl( '' );
+my $count = 0;
+for my $path ( @{ $layer } ) {
+    pl( '    path: %d', $count );
+    pl( '    number lines: %s', scalar( @{ $path } ) );
+    my $bbox = $path->bounding_box;
+    pl( '    size: [ %0.2f, %0.2f ]', $bbox->width, $bbox->height );
+    pl( '    min: [ %0.2f, %0.2f ], max: [ %0.2f, %0.2f ]', $bbox->minx, $bbox->miny, $bbox->maxx, $bbox->maxy );
+    pl( '    closed: %s', $path->closed ? 'yes' : 'NOT CLOSED' );
+    pl( '    has zero length lines: %s', $path->has_zero_length_lines ? 'YES' : 'no' );
+    pl( '' );
+    $count++;
+}
+
+
+sub pl {
+    my ( $template, @args ) = @_;
+    my $message = @args ? sprintf( $template, @args ) : $template;
+    print "$message\n";
+}

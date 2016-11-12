@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCTool::Project;
+
+my $project = CNCTool::Project->new( { program_name => 'find-uniq-layers' } );
+$project->program->run;

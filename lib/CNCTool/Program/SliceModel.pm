@@ -174,7 +174,7 @@ sub save_layer {
 
     my $file_name = sprintf( '%0.5f.layer', $ident );
 
-    my $content = $self->project->serialise( $layer );
+    my $content = $self->project->serialise_layer( $layer );
     $self->project->save_file( 'raw_layer_files', $file_name, $content );
 }
 
@@ -184,7 +184,7 @@ sub load_layer {
     my $file_name = sprintf( '%05d.layer', $count );
 
     my $content = $self->project->load_file( 'raw_layer_files', $file_name );
-    return $self->project->deserialise( $content );
+    return $self->project->deserialise_layer( $content );
 }
 
 __PACKAGE__->meta->make_immutable;

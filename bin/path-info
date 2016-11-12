@@ -1,0 +1,61 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCTool::Options;
+use CNCTool::Util;
+
+my $options = CNCTool::Options->new(
+    {
+        name    => 'file',
+        type    => 'file',
+        req     => 1,
+        desc    => 'Path file',
+    },
+);
+my $opts = $options->get_options;
+
+my $util = CNCTool::Util->new;
+my $path = $util->load_path_file( { file => $opts->{file} } );
+
+pl( '' );
+pl( 'path info:' );
+pl( 'number lines: %s', scalar( @{ $path } ) );
+my $bbox = $path->bounding_box;
+pl( 'size: [ %0.2f, %0.2f ]', $bbox->width, $bbox->height );
+pl( 'min: [ %0.2f, %0.2f ], max: [ %0.2f, %0.2f ]', $bbox->minx, $bbox->miny, $bbox->maxx, $bbox->maxy );
+pl( 'closed: %s', $path->closed ? 'yes' : 'NOT CLOSED' );
+pl( 'has zero length lines: %s', $path->has_zero_length_lines ? 'YES' : 'no' );
+
+my $prev_line;
+my $gaps = 0;
+my $short_lines = 0;
+LINE: for my $line ( @{ $path } ) {
+    if ( !$prev_line ) {
+        $prev_line = $line;
+        next LINE;
+    }
+    if ( !$prev_line->end->equal( $line->start ) ) {
+        $gaps++;
+    }
+    if ( $line->length < 0.1 ) {
+        pl(
+            '    short line: %0.4f => [%0.4f,%0.4f],[%0.4f,%0.4f]',
+            $line->length,
+            $line->start->X, $line->start->Y,
+            $line->end->X, $line->end->Y,
+        );
+        $short_lines++;
+    }
+    $prev_line = $line;
+}
+pl( 'number gaps: %s', $gaps );
+pl( 'number short lines: %s', $short_lines );
+pl( '' );
+
+sub pl {
+    my ( $template, @args ) = @_;
+    my $message = @args ? sprintf( $template, @args ) : $template;
+    print "$message\n";
+}

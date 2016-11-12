@@ -1,0 +1,54 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCTool::Options;
+use CNCTool::Util;
+
+my $options = CNCTool::Options->new(
+    {
+        name    => 'file',
+        type    => 'file',
+        req     => 1,
+        desc    => 'Path file',
+    },
+    {
+        name    => 'length-threshold',
+        type    => 'number',
+        req     => 0,
+        desc    => 'Length threshold',
+    },
+);
+my $opts = $options->get_options;
+
+my $util = CNCTool::Util->new;
+my $path = $util->load_path_file( { file => $opts->{file} } );
+
+my @new_lines;
+my $prev_line;
+my $length_threshold = $opts->{'length-threshold'} // 0.1;
+
+LINE: for my $line ( @{ $path } ) {
+    if ( !$prev_line ) {
+        $prev_line = $line;
+        push @new_lines, $line;
+        next LINE;
+    }
+    if ( !$prev_line->end->equal( $line->start ) ) {
+        $util->logger->debug( 'moving end point due to gap' );
+        $prev_line->move_end( $line->start );
+        push @new_lines, $line;
+    }
+
+    if ( $line->length < $length_threshold ) {
+        $util->logger->debug( 'removing short line' );
+        $prev_line->move_end( $line->end );
+    }
+    else {
+        push @new_lines, $line;
+    }
+    $prev_line = $line;
+}
+my $new_path = ACME::Geo::Path->new( @new_lines );
+print $util->serialise_path( $new_path ) . "\n";

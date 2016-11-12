@@ -3,7 +3,86 @@
 use strict;
 use warnings;
 use lib qw( lib );
-use CNCTool::Project;
+use CNCTool::Options;
+use CNCTool::Util;
+use CNCTool::Slice;
 
-my $project = CNCTool::Project->new( { program_name => 'slice-model' } );
-$project->program->run;
+my $options = CNCTool::Options->new(
+    {
+        name    => 'stl-file',
+        type    => 'file',
+        req     => 1,
+        desc    => 'STL file',
+    },
+    {
+        name    => 'dir',
+        type    => 'string',
+        req     => 1,
+        desc    => 'Where to dump layers to',
+    }
+);
+my $opts = $options->get_options;
+
+my $util = CNCTool::Util->new;
+
+$util->make_path( $opts->{dir} );
+
+my $slicer = CNCTool::Slice->new( { file => $opts->{'stl-file'} } );
+
+my $min_travel = sprintf( '%0.4f', 1 / 314.961 );
+my $max_height = $slicer->max_height;
+my $min_height = $slicer->min_height;
+
+my @z_heights;
+for ( my $z = $max_height; $z > $min_height; $z -= $min_travel ) {
+    push @z_heights, sprintf( '%0.4f', $z );
+}
+
+my $nr_layers = scalar( @z_heights );
+$util->logger->debug( 'calculated %d layers to slice', $nr_layers );
+
+slice_multi_process( $opts->{dir}, $util, $slicer, @z_heights );
+
+sub slice_single_process {
+    my ( $dir, $util, $slicer, @z_heights ) = @_;
+
+    for my $z ( @z_heights ) {
+        $util->logger->debug( 'slicing at %0.4f', $z );
+        my $layer = $slicer->layer_at_z( $z );
+        my $file_name = $dir . '/' . sprintf( '%0.5f.layer', $z );
+        save_layer( $util, $file_name, $layer );
+    }
+}
+
+sub slice_multi_process {
+    my ( $dir, $util, $slicer, @z_heights ) = @_;
+
+    my $cpu_count = _cpu_count();
+    $util->logger->debug( 'detected %d CPUs', $cpu_count );
+
+    require Parallel::ForkManager;
+    my $pm = Parallel::ForkManager->new( $cpu_count );
+
+    DATA_LOOP: for my $z ( @z_heights ) {
+        my $pid = $pm->start and next DATA_LOOP;
+
+        $util->logger->debug( 'PID %d: slicing at %0.4f', $$, $z );
+        my $layer = $slicer->layer_at_z( $z );
+        my $file_name = $dir . '/' . sprintf( '%0.5f.layer', $z );
+        save_layer( $util, $file_name, $layer );
+
+        $pm->finish;
+    }
+}
+
+sub _cpu_count {
+    my $cpu_count = `grep -c -P '^processor\\s+:' /proc/cpuinfo`;
+    chomp $cpu_count;
+    return $cpu_count;
+}
+
+sub save_layer {
+    my ( $util, $file_name, $layer ) = @_;
+    my $content = $util->serialise_layer( $layer );
+    $util->save_file( $file_name, $content );
+}

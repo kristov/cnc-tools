@@ -1,9 +1,0 @@
-#!/usr/bin/env perl
-
-use strict;
-use warnings;
-use lib qw( lib );
-use CNCTool::Project;
-
-my $project = CNCTool::Project->new( { program_name => 'slice-view' } );
-$project->program->run;

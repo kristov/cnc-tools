@@ -1,0 +1,75 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCTool::Options;
+use CNCTool::Util;
+use CNCTool::App::PathView;
+
+my $options = CNCTool::Options->new(
+    {
+        name    => 'file',
+        type    => 'file',
+        req     => 1,
+        desc    => 'Layer file',
+    },
+    {
+        name    => 'show-points',
+        type    => 'bool',
+        req     => 0,
+        desc    => 'Display points',
+    },
+    {
+        name    => 'parallel',
+        type    => 'bool',
+        req     => 0,
+        desc    => 'Display the parallel',
+    },
+    {
+        name    => 'parallel-distance',
+        type    => 'number',
+        req     => 0,
+        desc    => 'Parallel distance (half tool width)',
+    },
+    {
+        name    => 'xoff',
+        type    => 'number',
+        req     => 0,
+        desc    => 'Display X offset',
+    },
+    {
+        name    => 'yoff',
+        type    => 'number',
+        req     => 0,
+        desc    => 'Display Y offset',
+    },
+    {
+        name    => 'scale',
+        type    => 'number',
+        req     => 0,
+        desc    => 'Zoom scale',
+    },
+    {
+        name    => 'flip-parallel',
+        type    => 'bool',
+        req     => 0,
+        desc    => 'Switch normal of parallel',
+    },
+);
+my $opts = $options->get_options;
+
+my $util = CNCTool::Util->new;
+my $path = $util->load_path_file( { file => $opts->{file} } );
+
+my $app = CNCTool::App::PathView->new( {
+    path                => $path,
+    show_points         => $opts->{'show-points'},
+    parallel            => $opts->{parallel},
+    parallel_distance   => $opts->{'parallel-distance'} // 1.5,
+    flip_parallel       => $opts->{'flip-parallel'},
+    xoff                => $opts->{xoff},
+    yoff                => $opts->{yoff},
+    scale               => $opts->{scale},
+} );
+$app->run;

@@ -1,0 +1,30 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCTool::Options;
+use CNCTool::Util;
+
+my $options = CNCTool::Options->new(
+    {
+        name    => 'file',
+        type    => 'file',
+        req     => 1,
+        desc    => 'Layer file',
+    },
+);
+my $opts = $options->get_options;
+
+my $util = CNCTool::Util->new;
+my $layer = $util->load_layer_file( { file => $opts->{file} } );
+
+my $bbox = $layer->bounding_box;
+my $minx = $bbox->minx;
+my $miny = $bbox->miny;
+
+my $tx = 0 - $minx;
+my $ty = 0 - $miny;
+
+$layer->translate( $tx, $ty );
+print $util->serialise_layer( $layer );

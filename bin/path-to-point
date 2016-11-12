@@ -1,0 +1,32 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCTool::Options;
+use CNCTool::Util;
+use CNCTool::App::PathView;
+
+my $options = CNCTool::Options->new(
+    {
+        name    => 'path',
+        type    => 'file',
+        req     => 1,
+        desc    => 'Layer file',
+    },
+);
+my $opts = $options->get_options;
+
+my $util = CNCTool::Util->new;
+my $path = $util->load_path_file( { file => $opts->{path} } );
+
+my $bbox = $path->bounding_box;
+my $hw = $bbox->width / 2;
+my $hh = $bbox->height / 2;
+
+my $x = $bbox->minx + $hw;
+my $y = $bbox->miny + $hh;
+
+my $point = ACME::Geo::Point->new( $x, $y );
+
+print $util->serialise_point( $point ) . "\n";

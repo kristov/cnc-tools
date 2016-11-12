@@ -1,0 +1,36 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCTool::Options;
+use CNCTool::Util;
+use CNCTool::FillPath;
+
+my $options = CNCTool::Options->new(
+    {
+        name    => 'file',
+        type    => 'file',
+        req     => 1,
+        desc    => 'Layer file',
+    },
+    {
+        name    => 'spacing',
+        type    => 'number',
+        req     => 1,
+        desc    => 'Space between lines',
+    },
+);
+my $opts = $options->get_options;
+
+my $util = CNCTool::Util->new;
+my $path = $util->load_path_file( { file => $opts->{file} } );
+
+my $fill = CNCTool::FillPath->new( {
+    path    => $path,
+    spacing => $opts->{spacing} // 2,
+} );
+
+my $new_path = $fill->generate_fill;
+
+print $util->serialise_path( $new_path );
