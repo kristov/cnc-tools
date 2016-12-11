@@ -5,6 +5,7 @@ use warnings;
 use lib qw( lib );
 use CNCTool::Options;
 use CNCTool::Util;
+use CNCTool::App::PathView;
 
 my $options = CNCTool::Options->new(
     {
@@ -13,16 +14,12 @@ my $options = CNCTool::Options->new(
         req     => 1,
         desc    => 'Layer file',
     },
-    {
-        name    => 'depth',
-        type    => 'number',
-        req     => 1,
-        desc    => 'Depth of drill',
-    },
 );
 my $opts = $options->get_options;
 
 my $util = CNCTool::Util->new;
-my $pointlist = $util->load_pointlist_file( { file => $opts->{file} } );
+my $path = $util->load_path_file( { file => $opts->{file} } );
 
-print $util->build_gcode_from_pointlist( $pointlist, $opts->{depth} );
+my $reverse = $path->reverse;
+
+print $util->serialise_path( $reverse ) . "\n";

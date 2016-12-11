@@ -15,25 +15,43 @@ has work_clearance => (
 );
 
 sub linerefs_to_gcode {
-    my ( $self, $lines ) = @_;
+    my ( $self, $lines, $name, $depth ) = @_;
 
-    for my $line ( @{ $lines } ) {
+    my @lines = @{ $lines };
+
+    $depth ||= 1;
+    $name ||= 'path of ' . scalar( @{ $lines } ) . ' lines';
+    $self->comment( 'BEGIN: ' . $name );
+
+    my $first = $lines[0];
+
+    $self->set_absolute;
+    $self->raise_above_work;
+    my ( $start, $end ) = @{ $first };
+    $self->move_to( $start->[0], $start->[1] );
+    $self->move_down_to( 0 - $depth );
+
+    for my $line ( @lines ) {
         my ( $start, $end ) = @{ $line };
         $self->move_to( $end->[0], $end->[1] );
     }
+    $self->raise_above_work;
+    $self->home;
+
+    $self->comment( 'END: ' . $name );
 
     return join( "\n", @{ $self->gcode } ) . "\n";
 }
 
 sub pointlist_to_drill {
-    my ( $self, $pointlist ) = @_;
+    my ( $self, $pointlist, $depth ) = @_;
 
     $self->set_absolute;
     $self->raise_above_work;
 
     for my $point ( @{ $pointlist } ) {
         $self->move_to( $point->[0], $point->[1] );
-        $self->move_down_to( -5.2 );
+        $self->move_down_to( 0 - $depth );
         $self->raise_above_work;
     }
     $self->move_to( 0, 0 );
@@ -50,6 +68,11 @@ sub set_absolute {
 sub raise_above_work {
     my ( $self ) = @_;
     $self->_add( "G0 Z%0.2f", $self->work_clearance );
+}
+
+sub home {
+    my ( $self ) = @_;
+    $self->move_to( 0, 0 );
 }
 
 sub move_down_to {

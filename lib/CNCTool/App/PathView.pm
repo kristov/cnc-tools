@@ -36,8 +36,20 @@ has yoff => (
     required => 0,
 );
 
+has mouse_x => (
+    is => 'rw',
+    isa => 'Maybe[Num]',
+    required => 0,
+);
+
+has mouse_y => (
+    is => 'rw',
+    isa => 'Maybe[Num]',
+    required => 0,
+);
+
 has scale => (
-    is => 'ro',
+    is => 'rw',
     isa => 'Maybe[Num]',
     required => 0,
     default => 0,
@@ -89,8 +101,6 @@ sub layer_renderers {
             $cr->save;
 
             my $path = $self->path;
-            my $scale = $self->scale // $self->calculate_scale( $path->bounding_box );
-
             my $R = 0;
             my $G = 1;
 
@@ -103,18 +113,13 @@ sub layer_renderers {
                 next PATH;
             }
 
-            my $xoff = $self->xoff // ( 0 - $bbox->minx ) * $scale;
-            my $yoff = $self->yoff // ( 0 - $bbox->miny ) * $scale;
-
             $cr->set_line_width( 2 );
-            $cr->set_source_rgb( 0, 1, 0 );
-            $self->render_path( $cr, $path, $scale, $xoff, $yoff );
+            $self->render_path( $cr, $path );
 
             if ( $self->parallel ) {
                 my $parallel = $path->parallel_path( $self->parallel_distance, $self->flip_parallel );
                 $cr->set_line_width( 1 );
-                $cr->set_source_rgb( 0, 1, 1 );
-                $self->render_path( $cr, $parallel, $scale, $xoff, $yoff );
+                $self->render_path( $cr, $parallel );
             }
 
             if ( $self->show_points ) {
@@ -122,8 +127,8 @@ sub layer_renderers {
                 $cr->set_source_rgb( 1, 0, 0 );
 
                 for my $line ( @{ $path } ) {
-                    my $xs = ( $line->start->X * $scale ) + $xoff;
-                    my $ys = ( $line->start->Y * $scale ) + $yoff;
+                    my $pop = $self->translate( [ $line->start->X, $line->start->Y ] );
+                    my ( $xs, $ys ) = @{ $pop };
                     $cr->rectangle( $xs - 2, $ys - 2, 4, 4 );
                 }
                 $cr->stroke();
@@ -135,17 +140,30 @@ sub layer_renderers {
 }
 
 sub render_path {
-    my ( $self, $cr, $path, $scale, $xoff, $yoff ) = @_;
+    my ( $self, $cr, $path ) = @_;
 
+    my $R = 1;
+    my $G = 0;
     for my $line ( @{ $path } ) {
-        my $xs = ( $line->start->X * $scale ) + $xoff;
-        my $ys = ( $line->start->Y * $scale ) + $yoff;
-        my $xe = ( $line->end->X * $scale ) + $xoff;
-        my $ye = ( $line->end->Y * $scale ) + $yoff;
+        $cr->set_source_rgb( $R, $G, 0 );
+        $R = $R ? 0 : 1;
+        $G = $G ? 0 : 1;
+        my $stp = $self->translate( [ $line->start->X, $line->start->Y ] );
+        my $enp = $self->translate( [ $line->end->X, $line->end->Y ] );
+        my ( $xs, $ys ) = @{ $stp };
+        my ( $xe, $ye ) = @{ $enp };
         $cr->move_to( $xs, $ys );
         $cr->line_to( $xe, $ye );
+        $cr->stroke();
     }
-    $cr->stroke();
+    #$cr->stroke();
+}
+
+sub handle_keypress {
+    my ( $self, $da, $event ) = @_;
+    if ( $event->keyval == 100 ) {
+        $self->{debug_zoom} = 1;
+    }
 }
 
 __PACKAGE__->meta->make_immutable;

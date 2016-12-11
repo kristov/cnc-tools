@@ -8,15 +8,26 @@ use CNCTool::Util;
 
 my $options = CNCTool::Options->new(
     {
-        name    => 'path',
+        name    => 'file',
         type    => 'file',
         req     => 1,
         desc    => 'Layer file',
+    },
+    {
+        name    => 'depth',
+        type    => 'number',
+        req     => 1,
+        desc    => 'Depth of drill',
     },
 );
 my $opts = $options->get_options;
 
 my $util = CNCTool::Util->new;
-my $path = $util->load_path_file( { file => $opts->{path} } );
+my $path = $util->load_path_file( { file => $opts->{file} } );
 
-print $util->build_gcode_from_path( $path );
+my $name;
+if ( $opts->{file} =~ /\/(.+)$/ ) {
+    $name = $1;
+}
+
+print $util->build_gcode_from_path( $path, $name, $opts->{depth} );

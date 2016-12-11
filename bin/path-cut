@@ -1,0 +1,74 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use lib qw( lib );
+use CNCTool::Options;
+use CNCTool::Util;
+
+my $options = CNCTool::Options->new(
+    {
+        name    => 'file',
+        type    => 'file',
+        req     => 1,
+        desc    => 'Layer file',
+    },
+    {
+        name    => 'bbox',
+        type    => 'string',
+        req     => 1,
+        desc    => 'x,y,x,y of boundig box',
+    },
+);
+my $opts = $options->get_options;
+
+my $util = CNCTool::Util->new;
+my $path = $util->load_path_file( { file => $opts->{file} } );
+
+my ( $minx, $miny, $maxx, $maxy ) = split( /,/, $opts->{bbox} );
+
+my @new_lines;
+for my $line ( @{ $path } ) {
+    if (
+        $line->start->X >= $minx &&
+        $line->start->Y >= $miny &&
+        $line->start->X <= $maxx &&
+        $line->start->Y <= $maxy &&
+        $line->end->X >= $minx &&
+        $line->end->Y >= $miny &&
+        $line->end->X <= $maxx &&
+        $line->end->Y <= $maxy
+    ) {
+        push @new_lines, $line;
+    }
+}
+
+my $prev_line;
+my @finished_lines;
+LINE: for my $line ( @new_lines ) {
+    if ( !$prev_line ) {
+        $prev_line = $line;
+        next LINE;
+    }
+    push @finished_lines, $prev_line;
+    if ( !$line->start->equal( $prev_line->end ) ) {
+        my $conline = ACME::Geo::Line->new_from_point_refs(
+            [ $prev_line->end->X, $prev_line->end->Y ],
+            [ $line->start->X, $line->start->Y ],
+        );
+        push @finished_lines, $conline;
+    }
+    $prev_line = $line;
+}
+my $line = $new_lines[0];
+if ( !$line->start->equal( $prev_line->end ) ) {
+    my $conline = ACME::Geo::Line->new_from_point_refs(
+        [ $prev_line->end->X, $prev_line->end->Y ],
+        [ $line->start->X, $line->start->Y ],
+    );
+    push @finished_lines, $conline;
+    push @finished_lines, $line;
+}
+my $new_path = ACME::Geo::Path->new( @finished_lines );
+
+print $util->serialise_path( $new_path ) . "\n";

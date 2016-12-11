@@ -9,7 +9,7 @@ use CNCTool::App::PathView;
 
 my $options = CNCTool::Options->new(
     {
-        name    => 'path',
+        name    => 'file',
         type    => 'file',
         req     => 1,
         desc    => 'Layer file',
@@ -18,7 +18,7 @@ my $options = CNCTool::Options->new(
 my $opts = $options->get_options;
 
 my $util = CNCTool::Util->new;
-my $path = $util->load_path_file( { file => $opts->{path} } );
+my $path = $util->load_path_file( { file => $opts->{file} } );
 
 my $bbox = $path->bounding_box;
 my $hw = $bbox->width / 2;

@@ -84,17 +84,17 @@ sub load_pointlist_file {
 }
 
 sub build_gcode_from_pointlist {
-    my ( $self, $pointlist ) = @_;
+    my ( $self, $pointlist, $depth ) = @_;
 
-    return $self->gcodegen->pointlist_to_drill( $pointlist );
+    return $self->gcodegen->pointlist_to_drill( $pointlist, $depth );
 }
 
 sub build_gcode_from_path {
-    my ( $self, $path ) = @_;
+    my ( $self, $path, $name, $depth ) = @_;
 
     my $raw = $self->converter->serialise_path( $path );
 
-    return $self->gcodegen->linerefs_to_gcode( $raw );
+    return $self->gcodegen->linerefs_to_gcode( $raw, $name, $depth );
 }
 
 sub load_file {

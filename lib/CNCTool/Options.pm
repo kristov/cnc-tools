@@ -45,9 +45,11 @@ sub get_options {
     }
     elsif ( @required_missing ) {
         $self->print_required_missing( @required_missing );
+        exit;
     }
     elsif ( $args->{help} ) {
         $self->print_help;
+        exit;
     }
 
     return $args;

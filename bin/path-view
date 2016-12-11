@@ -56,6 +56,12 @@ my $options = CNCTool::Options->new(
         req     => 0,
         desc    => 'Switch normal of parallel',
     },
+    {
+        name    => 'highlight',
+        type    => 'number',
+        req     => 0,
+        desc    => 'highlight this indexed line',
+    },
 );
 my $opts = $options->get_options;
 
@@ -71,5 +77,6 @@ my $app = CNCTool::App::PathView->new( {
     xoff                => $opts->{xoff},
     yoff                => $opts->{yoff},
     scale               => $opts->{scale},
+    highlight           => $opts->{highlight},
 } );
 $app->run;
