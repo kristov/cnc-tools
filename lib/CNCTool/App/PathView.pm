@@ -156,7 +156,6 @@ sub render_path {
         $cr->line_to( $xe, $ye );
         $cr->stroke();
     }
-    #$cr->stroke();
 }
 
 sub handle_keypress {

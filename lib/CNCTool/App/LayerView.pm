@@ -49,10 +49,6 @@ sub layer_renderers {
             $cr->save;
 
             my $layer = $self->layer;
-            my $scale = $self->calculate_scale( $layer->bounding_box );
-
-            my $R = 0;
-            my $G = 1;
 
             PATH: for my $path ( @{ $layer } ) {
 
@@ -65,31 +61,17 @@ sub layer_renderers {
                 }
 
                 $cr->set_line_width( 2 );
-                $cr->set_source_rgb( $R, $G, 0 );
+                $cr->set_source_rgb( 0, 1, 0 );
 
-                $R = ( $R == 0 ) ? 1 : 0;
-                $G = ( $G == 0 ) ? 1 : 0;
-
-
-                my $offset = 20;
-
-                for my $line ( @{ $path } ) {
-                    my $xs = ( $line->start->X * $scale ) + $offset;
-                    my $ys = ( $line->start->Y * $scale ) + $offset;
-                    my $xe = ( $line->end->X * $scale ) + $offset;
-                    my $ye = ( $line->end->Y * $scale ) + $offset;
-                    $cr->move_to( $xs, $ys );
-                    $cr->line_to( $xe, $ye );
-                }
-                $cr->stroke();
+                $self->render_path( $cr, $path );
 
                 if ( $self->show_points ) {
                     $cr->set_line_width( 1 );
                     $cr->set_source_rgb( 1, 0, 0 );
 
                     for my $line ( @{ $path } ) {
-                        my $xs = ( $line->start->X * $scale ) + $offset;
-                        my $ys = ( $line->start->Y * $scale ) + $offset;
+                        my $pop = $self->translate( [ $line->start->X, $line->start->Y ] );
+                        my ( $xs, $ys ) = @{ $pop };
                         $cr->rectangle( $xs - 2, $ys - 2, 4, 4 );
                     }
                     $cr->stroke();
@@ -99,6 +81,25 @@ sub layer_renderers {
             $cr->restore;
         },
     ];
+}
+
+sub render_path {
+    my ( $self, $cr, $path ) = @_;
+
+    my $R = 1;
+    my $G = 0;
+    for my $line ( @{ $path } ) {
+        $cr->set_source_rgb( $R, $G, 0 );
+        $R = $R ? 0 : 1;
+        $G = $G ? 0 : 1;
+        my $stp = $self->translate( [ $line->start->X, $line->start->Y ] );
+        my $enp = $self->translate( [ $line->end->X, $line->end->Y ] );
+        my ( $xs, $ys ) = @{ $stp };
+        my ( $xe, $ye ) = @{ $enp };
+        $cr->move_to( $xs, $ys );
+        $cr->line_to( $xe, $ye );
+        $cr->stroke();
+    }
 }
 
 __PACKAGE__->meta->make_immutable;
